@@ -98,38 +98,37 @@ run_batch <- function() {
     # Restore MAX_FILES_PER_RUN
     assign("MAX_FILES_PER_RUN", prev_max, envir = .GlobalEnv)
 
-    if (is.null(scan_results) || length(scan_results) == 0) {
-      n_dates_skipped <- n_dates_skipped + 1L
-      next
-    }
-
-    # ------ 3d. Format and write rows to Excel for this date -------
-    date_rows <- list()
-    for (sr in scan_results) {
-      rows <- tryCatch(
-        format_batch_rows(sr$scan_res, sr$streams, window, BATCH_EVENT),
-        error = function(e) {
-          warning("  Could not format rows for scan ", sr$scan_res$scan_time,
-                  ": ", e$message)
-          NULL
+    if (!is.null(scan_results) && length(scan_results) > 0) {
+      # ------ 3d. Format and write rows to Excel for this date -------
+      date_rows <- list()
+      for (sr in scan_results) {
+        rows <- tryCatch(
+          format_batch_rows(sr$scan_res, sr$streams, window, BATCH_EVENT),
+          error = function(e) {
+            warning("  Could not format rows for scan ", sr$scan_res$scan_time,
+                    ": ", e$message)
+            NULL
+          }
+        )
+        if (!is.null(rows)) {
+          date_rows[[length(date_rows) + 1]] <- rows
+          n_scans_total <- n_scans_total + 1L
         }
-      )
-      if (!is.null(rows)) {
-        date_rows[[length(date_rows) + 1]] <- rows
-        n_scans_total <- n_scans_total + 1L
       }
+
+      if (length(date_rows) > 0) {
+        date_df <- do.call(rbind, date_rows)
+        message("  Writing ", nrow(date_df), " stream row(s) to Excel...")
+        write_batch_rows(date_df, BATCH_OUTPUT_FILE, overwrite = (is_first_write && BATCH_OVERWRITE_OUTPUT))
+        is_first_write <- FALSE
+      }
+
+      n_dates_ok <- n_dates_ok + 1L
+    } else {
+      n_dates_skipped <- n_dates_skipped + 1L
     }
 
-    if (length(date_rows) > 0) {
-      date_df <- do.call(rbind, date_rows)
-      message("  Writing ", nrow(date_df), " stream row(s) to Excel...")
-      write_batch_rows(date_df, BATCH_OUTPUT_FILE, overwrite = (is_first_write && BATCH_OVERWRITE_OUTPUT))
-      is_first_write <- FALSE
-    }
-
-    n_dates_ok <- n_dates_ok + 1L
-
-    # Purge downloaded pvol files for this date to keep server storage clean
+    # ------ 3e. ALWAYS Purge raw pvol files for this date immediately after date completes ------
     if (exists("CLEAN_PVOL_AFTER_RUN") && isTRUE(CLEAN_PVOL_AFTER_RUN)) {
       clear_pvol_directory()
     }
@@ -156,4 +155,5 @@ run_batch <- function() {
           })
   message("=============================================================")
 }
+
 
