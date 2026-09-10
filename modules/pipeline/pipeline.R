@@ -19,8 +19,16 @@ run_pipeline <- function(date_start = DATE_START, date_end = DATE_END) {
     }
   }
 
-  # 1. Setup output directory
-  run_dir <- file.path(OUTPUT_DIR, run_stub_for(date_start, date_end))
+  # 1. Setup output directory (Roost-wise -> Year-wise)
+  roost_folder <- if (exists("ACTIVE_ROOST_PRESET") && nchar(ACTIVE_ROOST_PRESET) > 0) {
+    gsub("[^A-Za-z0-9_-]", "_", ACTIVE_ROOST_PRESET)
+  } else if (exists("ROOST_NAME") && nchar(ROOST_NAME) > 0) {
+    gsub("[^A-Za-z0-9_-]", "_", ROOST_NAME)
+  } else {
+    "default_roost"
+  }
+  year_folder <- format(date_start, "%Y", tz = "UTC")
+  run_dir <- file.path(OUTPUT_DIR, roost_folder, year_folder, run_stub_for(date_start, date_end))
 
   if (OVERWRITE_RUN_OUTPUT && dir.exists(run_dir)) {
     message("Cleaning existing output directory: ", run_dir)
@@ -206,4 +214,5 @@ process_single_scan <- function(f, run_dir) {
     return(NULL)
   })
 }
+
 
