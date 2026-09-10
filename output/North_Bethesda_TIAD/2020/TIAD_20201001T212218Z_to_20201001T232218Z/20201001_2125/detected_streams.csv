@@ -1,0 +1,4 @@
+"bearing_deg","compass","quality_score","corridor_eta_sum","corridor_eta_mean","contrast_ratio","local_prominence_ratio","corridor_valid_pixels","contiguous_extent_km","max_extent_km","supporting_bearings","vcp","weather_flag"
+329,"NNW",8607.35248593639,763.388616,15.57936,1.248157,1.28207093183496,49,13,30,"326;327;328;329;330;331;332;333","unknown","clear"
+315,"NW",2998.61633214,582.481805,13.868614,0.913173,0.701770127011012,42,14,29,"315;317;318;319;320","unknown","clear"
+274,"W",1042.67165709677,306.914578,19.182161,1.178789,0.787806383898769,16,5.5,29,"273;274;275","unknown","clear"

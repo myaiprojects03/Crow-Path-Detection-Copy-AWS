@@ -11,6 +11,7 @@ CARTO_API_KEY <- "cb1_2irk_1_3c9fadc7865a5b6c0e39cfb7"
 
 # Scoring annulus (DETECTION ONLY)
 DETECTION_MIN_DIST_KM <- 1
+
 DETECTION_MAX_DIST_KM <- 30
 
 # Suppress pixels near radar
