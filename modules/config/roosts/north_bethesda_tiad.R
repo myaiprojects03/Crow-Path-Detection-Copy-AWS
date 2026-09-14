@@ -13,11 +13,11 @@ list(
   # Geographic boundaries for map plots (overrides default 30 km limits)
   map_xlim                   = c(-77.45, -76.97),
   map_ylim                   = c(38.95,  39.28),
-  CONTRAST_THRESHOLD         = 0.85,
+  CONTRAST_THRESHOLD         = 1.25,
   MAP_DBZH_TRANSPARENT_BELOW = 5,
   CORRIDOR_DENSITY_THRESHOLD = 0.08,
-  RADAR_SUPPRESS_DIST_KM     = 8.0,
-  DETECT_DBZH_MIN            = 5,
+  RADAR_SUPPRESS_DIST_KM     = 12.0,
+  DETECT_DBZH_MIN            = 9.0,
   LOCAL_PROMINENCE_THRESHOLD = 0.40,
   MERGE_GAP_DEG              = 1,
   WEAK_STREAM_ANGLE_WINDOW_DEG   = 15,
@@ -25,3 +25,5 @@ list(
   DISPLAY_MERGE_GAP_DEG      = 12,
   PIPELINE_FOCUS                 = "detail"
 )
+
+

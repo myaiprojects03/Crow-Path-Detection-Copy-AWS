@@ -33,8 +33,8 @@ if (!exists("DETECTION_SENSITIVITY")) {
   DETECTION_SENSITIVITY <- "standard"
 }
 
-# Detection thresholds
-DETECT_DBZH_MIN     <- 8
+# Detection thresholds (Refined to eliminate false positives)
+DETECT_DBZH_MIN     <- 9.0
 ETA_THRESHOLD       <- 10^(DETECT_DBZH_MIN / 10)
 MIN_CORRIDOR_PIXELS <- 4
 MIN_CONTIGUOUS_BINS <- 3
@@ -48,11 +48,11 @@ LOCAL_PROMINENCE_EXCLUDE_DEG <- 2
 LOCAL_PROMINENCE_THRESHOLD   <- 1.05
 MAX_CONTRAST_FOR_SCORING     <- 5
 
-# Ratio and coverage thresholds
-CONTRAST_THRESHOLD           <- 0.80
+# Ratio and coverage thresholds (Strict thresholds for noise/rain rejection)
+CONTRAST_THRESHOLD           <- 1.25
 CORRIDOR_DENSITY_THRESHOLD   <- 0.05
 RUN_FILL_RATIO_MIN           <- 0.30
-MAX_ANNULUS_WEATHER_COVERAGE <- 0.30
+MAX_ANNULUS_WEATHER_COVERAGE <- 0.20
 WEATHER_COVERAGE_DBZH_MIN    <- 10.0
 
 apply_sensitivity_bundle <- function(bundle_name = DETECTION_SENSITIVITY) {
@@ -81,16 +81,16 @@ apply_sensitivity_bundle <- function(bundle_name = DETECTION_SENSITIVITY) {
     assign("CORRIDOR_DENSITY_THRESHOLD",   0.08, envir = .GlobalEnv)
     assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.30, envir = .GlobalEnv)
   } else {
-    assign("DETECT_DBZH_MIN",              8.0,  envir = .GlobalEnv)
-    assign("ETA_THRESHOLD",                10^(8.0 / 10), envir = .GlobalEnv)
+    assign("DETECT_DBZH_MIN",              9.0,  envir = .GlobalEnv)
+    assign("ETA_THRESHOLD",                10^(9.0 / 10), envir = .GlobalEnv)
     assign("MIN_CORRIDOR_PIXELS",          4L,   envir = .GlobalEnv)
     assign("MIN_CONTIGUOUS_BINS",          3L,   envir = .GlobalEnv)
     assign("RUN_START_BIN_MAX",            25L,  envir = .GlobalEnv)
     assign("LOCAL_PROMINENCE_THRESHOLD",   1.05, envir = .GlobalEnv)
-    assign("CONTRAST_THRESHOLD",           0.80, envir = .GlobalEnv)
+    assign("CONTRAST_THRESHOLD",           1.25, envir = .GlobalEnv)
     assign("CORRIDOR_DENSITY_THRESHOLD",   0.05, envir = .GlobalEnv)
     assign("RUN_FILL_RATIO_MIN",           0.30, envir = .GlobalEnv)
-    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.30, envir = .GlobalEnv)
+    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.20, envir = .GlobalEnv)
   }
 }
 
@@ -151,4 +151,8 @@ WEAK_STREAM_FRACTION_THRESHOLD <- 0.05
 # Parallel Processing Settings
 USE_PARALLEL <- TRUE
 NUM_CORES    <- 7L
+
+
+
+
 

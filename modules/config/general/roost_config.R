@@ -106,42 +106,15 @@ load_roost_preset <- function(preset_name, sensitivity = NULL) {
   )
   assign("RADAR_NAME",                 rad_name,                          envir = .GlobalEnv)
   
-  # Override detection variables
-  if (!is.null(preset$CONTRAST_THRESHOLD)) {
-    assign("CONTRAST_THRESHOLD",         preset$CONTRAST_THRESHOLD,         envir = .GlobalEnv)
-  }
+  # Detection parameters are controlled centrally by detection_config.R and batch_config.R.
+  # Roost presets only supply spatial metadata (name, lat, lon, timezone, radar_id, map limits).
   if (!is.null(preset$MAP_DBZH_TRANSPARENT_BELOW)) {
     assign("MAP_DBZH_TRANSPARENT_BELOW", preset$MAP_DBZH_TRANSPARENT_BELOW, envir = .GlobalEnv)
-  }
-  if (!is.null(preset$CORRIDOR_DENSITY_THRESHOLD)) {
-    assign("CORRIDOR_DENSITY_THRESHOLD", preset$CORRIDOR_DENSITY_THRESHOLD, envir = .GlobalEnv)
-  }
-  if (!is.null(preset$LOCAL_PROMINENCE_THRESHOLD)) {
-    assign("LOCAL_PROMINENCE_THRESHOLD", preset$LOCAL_PROMINENCE_THRESHOLD, envir = .GlobalEnv)
   }
   if (!is.null(preset$PIPELINE_FOCUS)) {
     assign("PIPELINE_FOCUS",             preset$PIPELINE_FOCUS,             envir = .GlobalEnv)
   } else {
     assign("PIPELINE_FOCUS",             "detail",                          envir = .GlobalEnv)
-  }
-  
-  # Allow overriding any other detection variables if present in the preset
-  extra_overrides <- c(
-    "DETECT_DBZH_MIN", "MIN_CORRIDOR_PIXELS", "MIN_CONTIGUOUS_BINS",
-    "RUN_START_BIN_MAX", "FLANK_MAX_DELTA_DEG", "LOCAL_PROMINENCE_WINDOW_DEG",
-    "LOCAL_PROMINENCE_EXCLUDE_DEG", "MAX_CONTRAST_FOR_SCORING",
-    "RUN_FILL_RATIO_MIN", "MAX_ANNULUS_WEATHER_COVERAGE",
-    "MERGE_GAP_DEG", "DISPLAY_MERGE_GAP_DEG",
-    "WEAK_STREAM_ANGLE_WINDOW_DEG", "WEAK_STREAM_FRACTION_THRESHOLD",
-    "MAX_GAP_BINS", "EXTENT_NEIGHBOR_DEG", "RADAR_SUPPRESS_DIST_KM"
-  )
-  for (var_name in extra_overrides) {
-    if (!is.null(preset[[var_name]])) {
-      assign(var_name, preset[[var_name]], envir = .GlobalEnv)
-      if (var_name == "DETECT_DBZH_MIN") {
-        assign("ETA_THRESHOLD", 10^(preset[[var_name]] / 10), envir = .GlobalEnv)
-      }
-    }
   }
 }
 
@@ -163,4 +136,5 @@ SINGLE_RUN_DATE         <- ""       # Format: "YYYY-MM-DD" (e.g. "2024-10-12")
 SINGLE_RUN_EVENT        <- "sunset" # Options: "sunset", "sunrise"
 SINGLE_RUN_START_OFFSET <- -60      # minutes relative to event (negative is before)
 SINGLE_RUN_END_OFFSET   <- 30       # minutes relative to event (positive is after)
+
 
