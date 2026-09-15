@@ -106,15 +106,17 @@ load_roost_preset <- function(preset_name, sensitivity = NULL) {
   )
   assign("RADAR_NAME",                 rad_name,                          envir = .GlobalEnv)
   
-  # Detection parameters are controlled centrally by detection_config.R and batch_config.R.
-  # Roost presets only supply spatial metadata (name, lat, lon, timezone, radar_id, map limits).
-  if (!is.null(preset$MAP_DBZH_TRANSPARENT_BELOW)) {
-    assign("MAP_DBZH_TRANSPARENT_BELOW", preset$MAP_DBZH_TRANSPARENT_BELOW, envir = .GlobalEnv)
-  }
-  if (!is.null(preset$PIPELINE_FOCUS)) {
-    assign("PIPELINE_FOCUS",             preset$PIPELINE_FOCUS,             envir = .GlobalEnv)
-  } else {
-    assign("PIPELINE_FOCUS",             "detail",                          envir = .GlobalEnv)
+  # Roost-specific parameter overrides (e.g. RADAR_SUPPRESS_DIST_KM, thresholds)
+  roost_override_keys <- c(
+    "RADAR_SUPPRESS_DIST_KM", "MAP_DBZH_TRANSPARENT_BELOW", "PIPELINE_FOCUS",
+    "CONTRAST_THRESHOLD", "CORRIDOR_DENSITY_THRESHOLD", "DETECT_DBZH_MIN",
+    "LOCAL_PROMINENCE_THRESHOLD", "MERGE_GAP_DEG", "DISPLAY_MERGE_GAP_DEG",
+    "WEAK_STREAM_ANGLE_WINDOW_DEG", "WEAK_STREAM_FRACTION_THRESHOLD"
+  )
+  for (k in roost_override_keys) {
+    if (!is.null(preset[[k]])) {
+      assign(k, preset[[k]], envir = .GlobalEnv)
+    }
   }
 }
 

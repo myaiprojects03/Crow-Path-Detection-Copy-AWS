@@ -300,8 +300,8 @@ process_scan_file <- function(file_path) {
 
   # Suppress pixels near the radar
   if (exists("RADAR_SUPPRESS_DIST_KM") && RADAR_SUPPRESS_DIST_KM > 0) {
-    radar_lat <- raw_pvol$geo$lat
-    radar_lon <- raw_pvol$geo$lon
+    radar_lat <- if (exists("RADAR_LAT") && !is.null(RADAR_LAT)) RADAR_LAT else raw_pvol$geo$lat
+    radar_lon <- if (exists("RADAR_LON") && !is.null(RADAR_LON)) RADAR_LON else raw_pvol$geo$lon
     
     raw_dist_radar <- vectorized_distance_km(radar_lat, radar_lon, raw_df$lat, raw_df$lon)
     raw_df$DBZH[!is.na(raw_dist_radar) & raw_dist_radar < RADAR_SUPPRESS_DIST_KM] <- NA_real_

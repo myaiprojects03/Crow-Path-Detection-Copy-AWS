@@ -213,6 +213,25 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
     plot_roost_name <- sub(paste0("\\s+", RADAR_ID, "$"), "", plot_roost_name, ignore.case = TRUE)
   }
 
+  # --- Apply RADAR_SUPPRESS_DIST_KM directly onto raw_ppi object before map rendering ---
+  if (exists("RADAR_SUPPRESS_DIST_KM") && is.numeric(RADAR_SUPPRESS_DIST_KM) && RADAR_SUPPRESS_DIST_KM > 0) {
+    tryCatch({
+      ppi_coords <- sp::coordinates(raw_ppi$data)
+      sp_wgs <- sp::spTransform(
+        sp::SpatialPoints(ppi_coords, proj4string = sp::CRS(sp::proj4string(raw_ppi$data))),
+        sp::CRS("+proj=longlat +datum=WGS84")
+      )
+      r_lat <- if (exists("RADAR_LAT") && !is.null(RADAR_LAT)) RADAR_LAT else raw_ppi$geo$lat
+      r_lon <- if (exists("RADAR_LON") && !is.null(RADAR_LON)) RADAR_LON else raw_ppi$geo$lon
+      if (!is.null(r_lat) && !is.null(r_lon)) {
+        dist_radar <- vectorized_distance_km(r_lat, r_lon, sp::coordinates(sp_wgs)[, 2], sp::coordinates(sp_wgs)[, 1])
+        if ("DBZH" %in% names(raw_ppi$data@data)) {
+          raw_ppi$data@data$DBZH[!is.na(dist_radar) & dist_radar < RADAR_SUPPRESS_DIST_KM] <- NA_real_
+        }
+      }
+    }, error = function(e) NULL)
+  }
+
   # --- 1. Basemap + bioRad raster (we strip the raster immediately after) ---
   # bioRad::map() requires a valid param name and always draws its own raster.
   # We remove that layer from the ggplot object so only the basemap tiles remain,
@@ -288,6 +307,16 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
     if ("CELL" %in% names(ppi_df)) {
       # CELL values >= 1 denote weather/clutter cells or their 5km fringe
       px_df$dbzh[!is.na(ppi_df$CELL) & ppi_df$CELL >= 1] <- NA
+    }
+    
+    # Suppress pixels near radar tower in map plots
+    if (exists("RADAR_SUPPRESS_DIST_KM") && is.numeric(RADAR_SUPPRESS_DIST_KM) && RADAR_SUPPRESS_DIST_KM > 0) {
+      r_lat <- if (exists("RADAR_LAT") && !is.null(RADAR_LAT)) RADAR_LAT else (if (!is.null(raw_ppi$geo$lat)) raw_ppi$geo$lat else NULL)
+      r_lon <- if (exists("RADAR_LON") && !is.null(RADAR_LON)) RADAR_LON else (if (!is.null(raw_ppi$geo$lon)) raw_ppi$geo$lon else NULL)
+      if (!is.null(r_lat) && !is.null(r_lon)) {
+        dist_radar <- vectorized_distance_km(r_lat, r_lon, px_df$lat, px_df$lon)
+        px_df$dbzh[!is.na(dist_radar) & dist_radar < RADAR_SUPPRESS_DIST_KM] <- NA
+      }
     }
     # Apply transparency threshold (config: MAP_DBZH_TRANSPARENT_BELOW)
     px_df$dbzh[!is.na(px_df$dbzh) & px_df$dbzh < MAP_DBZH_TRANSPARENT_BELOW] <- NA
