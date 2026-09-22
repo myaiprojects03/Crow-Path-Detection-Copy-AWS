@@ -4,12 +4,12 @@
 
 #Default run set to batch for the AWS run.
 RUN_MODE <- "batch" 
-ACTIVE_ROOST_PRESET <- "North Bethesda TIAD" # e.g., "North Bethesda KLWX", "North Bethesda TIAD", "Shirlington VA", 
+ACTIVE_ROOST_PRESET <- "Shirlington VA" # e.g., "North Bethesda KLWX", "North Bethesda TIAD", "Shirlington VA", 
                                              # or any custom preset in custom_roost_presets.R 
-BATCH_START_MMDD         <- "10-01" # Format: MM-DD
-BATCH_END_MMDD           <- "10-30" # Format: MM-DD
+BATCH_START_MMDD         <- "11-01" # Format: MM-DD
+BATCH_END_MMDD           <- "11-02" # Format: MM-DD
 BATCH_EVENT              <- "sunset"
-BATCH_START_YEAR         <- 2020L
+BATCH_START_YEAR         <- 2025L
 BATCH_END_YEAR           <- 2025L
 BATCH_START_OFFSET_MIN   <- -90L
 BATCH_END_OFFSET_MIN     <- +30L
