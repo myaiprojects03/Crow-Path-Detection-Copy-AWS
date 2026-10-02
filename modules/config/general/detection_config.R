@@ -1,5 +1,5 @@
-# =============================================================================
-# detection_config.R — General detection, masking, and display configurations
+﻿# =============================================================================
+# detection_config.R â€” General detection, masking, and display configurations
 # =============================================================================
 
 CUSTOM_STATION_FILE          <- "data/locations.dat"
@@ -8,6 +8,24 @@ MAX_FILES_PER_RUN            <- 3000L
 
 #cartolight API Key
 CARTO_API_KEY <- "cb1_2irk_1_3c9fadc7865a5b6c0e39cfb7"
+
+# Register authenticated Carto tile source to prevent "API KEY REQUIRED" watermark
+if (requireNamespace("rosm", quietly = TRUE) && nzchar(CARTO_API_KEY)) {
+  tryCatch({
+    custom_carto <- rosm:::create_tile_source(
+      get_tile_url = function(xtile, ytile, zoom, quadkey = "") {
+        sprintf("https://basemaps.cartocdn.com/rastertiles/light_all/%d/%d/%d.png?key=%s", zoom, xtile, ytile, CARTO_API_KEY)
+      },
+      get_attribution = function() "(c) CARTO, (c) OpenStreetMap contributors",
+      get_max_zoom   = function() 19,
+      get_min_zoom   = function() 0,
+      get_extension  = function() "png",
+      name           = "cartolight",
+      url_formats    = sprintf("https://basemaps.cartocdn.com/rastertiles/light_all/${z}/${x}/${y}.png?key=%s", CARTO_API_KEY)
+    )
+    rosm::register_tile_source(cartolight = custom_carto)
+  }, error = function(e) NULL)
+}
 
 # Scoring annulus (DETECTION ONLY)
 DETECTION_MIN_DIST_KM <- 1

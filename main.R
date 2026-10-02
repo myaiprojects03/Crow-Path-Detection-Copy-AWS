@@ -1,5 +1,5 @@
-# =============================================================================
-# main.R — Unified Entry Point for Crow Path Detection Pipeline
+﻿# =============================================================================
+# main.R â€” Unified Entry Point for Crow Path Detection Pipeline
 # =============================================================================
 #
 # Usage:
@@ -18,12 +18,7 @@ library(openxlsx)
 library(aws.s3)
 library(rlang)
 
-# Register the authenticated CartoDB tile source using the API key
-if (exists("CARTO_API_KEY") && nzchar(CARTO_API_KEY)) {
-  rosm::register_tile_source(
-    cartolight_auth = paste0("https://basemaps.cartocdn.com/rastertiles/light_all/${z}/${x}/${y}.png?key=", CARTO_API_KEY)
-  )
-}
+# Authenticated Carto tile source registered via detection_config.R
 
 
 # Source all general project modules and pipeline logic
