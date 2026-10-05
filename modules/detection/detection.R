@@ -64,10 +64,18 @@ score_bearings <- function(pixel_df) {
       abs(delta_deg) <= FLANK_MAX_DELTA_DEG
 
     corridor_sig <- corridor_all & !is.na(annulus_df$eta)
+
+    use_matched_flank <- exists("MATCHED_FLANK_BINS") && isTRUE(MATCHED_FLANK_BINS)
+    if (use_matched_flank) {
+      active_bins <- unique(annulus_df$dist_bin[corridor_sig])
+      flank_all   <- flank_all & (annulus_df$dist_bin %in% active_bins)
+    }
+
     flank_sig    <- flank_all    & !is.na(annulus_df$eta)
 
-    corridor_eta <- annulus_df$eta[corridor_sig]
-    flank_eta    <- annulus_df$eta[flank_sig]
+    corridor_eta  <- annulus_df$eta[corridor_sig]
+    corridor_dist <- annulus_df$dist_km[corridor_sig]
+    flank_eta     <- annulus_df$eta[flank_sig]
 
     corridor_eta_mean <- if (length(corridor_eta) > 0) mean(corridor_eta) else 0
     corridor_eta_sum  <- if (length(corridor_eta) > 0) sum(corridor_eta)  else 0
@@ -79,6 +87,13 @@ score_bearings <- function(pixel_df) {
       Inf
     } else {
       0
+    }
+
+    use_dist_scoring  <- exists("DISTANCE_WEIGHT_SCORING") && isTRUE(DISTANCE_WEIGHT_SCORING)
+    dist_weighted_eta <- if (use_dist_scoring && length(corridor_eta) > 0) {
+      sum(corridor_eta * ((corridor_dist / 10.0)^1.5))
+    } else {
+      corridor_eta_sum
     }
 
     corridor_bins <- annulus_df$dist_bin[corridor_sig]
@@ -107,6 +122,7 @@ score_bearings <- function(pixel_df) {
       bearing_deg           = bearing_deg,
       corridor_eta_mean     = round(corridor_eta_mean, 6),
       corridor_eta_sum      = round(corridor_eta_sum, 6),
+      dist_weighted_eta     = round(dist_weighted_eta, 6),
       corridor_density      = round(
         ifelse(sum(corridor_all) > 0, sum(corridor_sig) / sum(corridor_all), 0),
         6
@@ -126,32 +142,47 @@ score_bearings <- function(pixel_df) {
 
   scores <- do.call(rbind, scored)
 
-  # Local prominence: ratio of each bearing's eta sum to its angular neighbourhood
+  use_dist_scoring <- exists("DISTANCE_WEIGHT_SCORING") && isTRUE(DISTANCE_WEIGHT_SCORING)
+
+  # Local prominence: ratio of each bearing's eta to its angular neighbourhood
   scores$local_background_eta <- vapply(scores$bearing_deg, function(b) {
     d    <- angular_distance_deg(scores$bearing_deg, b)
     keep <- d >= LOCAL_PROMINENCE_EXCLUDE_DEG & d <= LOCAL_PROMINENCE_WINDOW_DEG
-    vals <- scores$corridor_eta_sum[keep]
+    vals <- if (use_dist_scoring) scores$dist_weighted_eta[keep] else scores$corridor_eta_sum[keep]
     vals <- vals[is.finite(vals)]
     if (length(vals) == 0) return(0)
     mean(vals)
   }, numeric(1))
 
+  prom_num <- if (use_dist_scoring) scores$dist_weighted_eta else scores$corridor_eta_sum
   scores$local_prominence_ratio <- ifelse(
     scores$local_background_eta > 0,
-    scores$corridor_eta_sum / scores$local_background_eta,
-    ifelse(scores$corridor_eta_sum > 0, Inf, 0)
+    prom_num / scores$local_background_eta,
+    ifelse(prom_num > 0, Inf, 0)
   )
 
   # Composite quality score used for stream ranking
   scores$contrast_for_score <- pmin(scores$contrast_ratio, MAX_CONTRAST_FOR_SCORING)
-  scores$quality_score <- with(
-    scores,
-    corridor_eta_sum *
-      pmax(contrast_for_score, 1) *
-      pmax(contiguous_extent_km, DIST_BIN_KM) *
-      pmax(local_prominence_ratio, 1) *
-      pmax(run_fill_ratio, 0.1)
-  )
+  if (use_dist_scoring) {
+    scores$quality_score <- with(
+      scores,
+      pmax(corridor_valid_pixels, 1) *
+        (pmax(contiguous_extent_km, DIST_BIN_KM)^1.5) *
+        (pmax(max_extent_km, DIST_BIN_KM)^1.5) *
+        pmax(contrast_for_score, 0.5) *
+        pmax(local_prominence_ratio, 0.5) *
+        pmax(run_fill_ratio, 0.1)
+    )
+  } else {
+    scores$quality_score <- with(
+      scores,
+      corridor_eta_sum *
+        pmax(contrast_for_score, 1) *
+        pmax(contiguous_extent_km, DIST_BIN_KM) *
+        pmax(local_prominence_ratio, 1) *
+        pmax(run_fill_ratio, 0.1)
+    )
+  }
 
   # Boolean detection flag: all thresholds must pass
   scores$stream_detected <- with(
@@ -235,7 +266,14 @@ merge_display_streams <- function(streams_df,
     chunk <- ordered[idx, , drop = FALSE]
     extent_vals <- if ("own_max_extent_km" %in% names(chunk)) chunk$own_max_extent_km else chunk$max_extent_km
     best_idx <- order(-extent_vals, -chunk$corridor_valid_pixels, -chunk$quality_score)[1]
-    display_bearing <- chunk$bearing_deg[best_idx]
+    
+    use_dist_compass <- exists("DISTANCE_WEIGHT_COMPASS") && isTRUE(DISTANCE_WEIGHT_COMPASS)
+    display_bearing  <- if (use_dist_compass && nrow(chunk) > 1) {
+      weights <- (chunk$max_extent_km^3) * chunk$corridor_valid_pixels
+      round(circular_weighted_mean_deg(chunk$bearing_deg, weights)) %% 360
+    } else {
+      chunk$bearing_deg[best_idx]
+    }
 
     support_parts <- unlist(strsplit(chunk$supporting_bearings, ";", fixed = TRUE))
     support_parts <- sort(unique(support_parts[nzchar(support_parts)]))
@@ -302,18 +340,37 @@ select_streams <- function(scores) {
   selected <- lapply(zones, function(zone_bearings) {
     zone_scores <- scores[scores$bearing_deg %in% zone_bearings, , drop = FALSE]
     zone_active <- zone_scores[zone_scores$stream_detected, , drop = FALSE]
-    peak_idx <- order(
-      -zone_active$quality_score,
-      -zone_active$corridor_eta_sum,
-       zone_active$bearing_deg
-    )[1]
+    use_dist_compass <- exists("DISTANCE_WEIGHT_COMPASS") && isTRUE(DISTANCE_WEIGHT_COMPASS)
+    peak_idx <- if (use_dist_compass) {
+      order(
+        -zone_active$max_extent_km,
+        -zone_active$contiguous_extent_km,
+        -zone_active$corridor_valid_pixels,
+        -zone_active$quality_score
+      )[1]
+    } else {
+      order(
+        -zone_active$quality_score,
+        -zone_active$corridor_eta_sum,
+         zone_active$bearing_deg
+      )[1]
+    }
     peak         <- zone_active[peak_idx, , drop = FALSE]
-    refined_zone <- refine_zone_support(zone_active, peak$bearing_deg)
+    refined_zone <- if (use_dist_compass) {
+      refine_zone_support(zone_active, peak$bearing_deg, min_peak_fraction = 0.20, max_refine_span_deg = 15)
+    } else {
+      refine_zone_support(zone_active, peak$bearing_deg)
+    }
 
-    # Weighted mean bearing of the refined support region
+    # Weighted mean bearing of the refined support region (weights further pixels when enabled)
+    bearing_weights <- if (use_dist_compass) {
+      (refined_zone$max_extent_km^3) * refined_zone$corridor_valid_pixels
+    } else {
+      pmax(refined_zone$quality_score, 1) * (refined_zone$max_extent_km^2)
+    }
     display_bearing <- round(circular_weighted_mean_deg(
       refined_zone$bearing_deg,
-      pmax(refined_zone$quality_score, 1) * (refined_zone$max_extent_km^2)
+      bearing_weights
     )) %% 360
     display_idx <- which.min(angular_distance_deg(
       refined_zone$bearing_deg,

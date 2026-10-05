@@ -121,6 +121,11 @@ MAX_STREAMS_PER_SCAN  <- 5
 DISPLAY_MERGE_GAP_DEG <- 12
 EXTENT_NEIGHBOR_DEG   <- 5
 
+# Distance / reach weighting controls (weights further pixels for compass & scoring)
+DISTANCE_WEIGHT_COMPASS <- TRUE
+DISTANCE_WEIGHT_SCORING <- TRUE
+MATCHED_FLANK_BINS      <- TRUE
+
 # Detection masking
 USE_VOL2BIRD              <- FALSE
 USE_MISTNET_FOR_DETECTION <- FALSE
