@@ -329,25 +329,47 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
       px_df$x  <- merc$x
       px_df$y  <- merc$y
 
-      p <- p +
-        ggplot2::geom_point(
-          data        = px_df,
-          ggplot2::aes(x = x, y = y, colour = dbzh),
-          inherit.aes = FALSE,
-          shape       = MAP_PIXEL_SHAPE,
-          size        = MAP_PIXEL_SIZE,
-          alpha       = MAP_PIXEL_ALPHA,
-          stroke      = 0
-        ) +
-        ggplot2::scale_colour_gradientn(
-          colors    = radar_colors,
-          values    = radar_values,
-          limits    = c(MAP_DBZH_MIN, MAP_DBZH_MAX),
-          oob       = squish_oob,
-          na.value  = NA,
-          name      = "dBZ",
-          guide     = ggplot2::guide_colorbar(barheight = grid::unit(3.5, "in"))
-        )
+      if (exists("MAP_USE_TILES") && isTRUE(MAP_USE_TILES)) {
+        grid_w <- 200 * (1 / cos(ROOST_LAT * pi / 180))
+        p <- p +
+          ggplot2::geom_tile(
+            data        = px_df,
+            ggplot2::aes(x = x, y = y, fill = dbzh),
+            width       = grid_w,
+            height      = grid_w,
+            alpha       = MAP_PIXEL_ALPHA,
+            inherit.aes = FALSE
+          ) +
+          ggplot2::scale_fill_gradientn(
+            colors    = radar_colors,
+            values    = radar_values,
+            limits    = c(MAP_DBZH_MIN, MAP_DBZH_MAX),
+            oob       = squish_oob,
+            na.value  = NA,
+            name      = "dBZ",
+            guide     = ggplot2::guide_colorbar(barheight = grid::unit(3.5, "in"))
+          )
+      } else {
+        p <- p +
+          ggplot2::geom_point(
+            data        = px_df,
+            ggplot2::aes(x = x, y = y, colour = dbzh),
+            inherit.aes = FALSE,
+            shape       = MAP_PIXEL_SHAPE,
+            size        = MAP_PIXEL_SIZE,
+            alpha       = MAP_PIXEL_ALPHA,
+            stroke      = 0
+          ) +
+          ggplot2::scale_colour_gradientn(
+            colors    = radar_colors,
+            values    = radar_values,
+            limits    = c(MAP_DBZH_MIN, MAP_DBZH_MAX),
+            oob       = squish_oob,
+            na.value  = NA,
+            name      = "dBZ",
+            guide     = ggplot2::guide_colorbar(barheight = grid::unit(3.5, "in"))
+          )
+      }
     }
   }
 
@@ -397,7 +419,7 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
     ) +
     ggplot2::geom_text(
       data        = roost_xy,
-      ggplot2::aes(x = x, y = y, label = plot_roost_name, "Roost"),
+      ggplot2::aes(x = x, y = y, label = plot_roost_name),
       inherit.aes = FALSE,
       vjust       = 2.0,
       size        = 3.3,

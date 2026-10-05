@@ -13,6 +13,8 @@ list(
   # Geographic boundaries for map plots (overrides default 30 km limits)
   map_xlim                       = c(-77.38, -77.00),
   map_ylim                       = c(38.68,  38.98),
+  MAP_ZOOM                       = 1,
+  MAP_USE_TILES                  = TRUE,
   CONTRAST_THRESHOLD             = 1.25,
   DETECT_DBZH_MIN                = 9.0,
   MIN_CORRIDOR_PIXELS            = 12L,

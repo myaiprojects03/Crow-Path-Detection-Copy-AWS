@@ -280,7 +280,15 @@ process_scan_file <- function(file_path) {
 
   raw_pvol <- read_with_station_retry(proc_path)
   raw_scan <- bioRad::get_scan(raw_pvol, ELEVATION_DEG)
-  raw_ppi  <- bioRad::project_as_ppi(raw_scan)
+  is_tdca <- (exists("RADAR_ID") && identical(RADAR_ID, "TDCA")) ||
+             (!is.null(raw_pvol$radar) && grepl("TDCA", raw_pvol$radar, ignore.case = TRUE)) ||
+             (exists("MAP_USE_TILES") && isTRUE(MAP_USE_TILES))
+
+  raw_ppi <- if (is_tdca) {
+    bioRad::project_as_ppi(raw_scan, grid_size = 200, range_max = 35000)
+  } else {
+    bioRad::project_as_ppi(raw_scan)
+  }
 
   # MASK_CELL uses vol2bird CELL and does not require MistNet installation anymore
   need_mistnet <- USE_MISTNET_FOR_DETECTION || MASK_WEATHER

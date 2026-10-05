@@ -87,3 +87,25 @@ BT_ELEVATION_DEG <- if (startsWith(BT_RADAR_ID, "T")) 0.3 else 0.5
 BT_PLOT_WIDTH_IN  <- 10
 BT_PLOT_HEIGHT_IN <- 5
 BT_PLOT_DPI       <- 180
+
+# ---------------------------------------------------------------------------
+# 7. CONVEYOR & STREAM TRAFFIC PARAMETERS
+# ---------------------------------------------------------------------------
+# Biological & radar scattering assumptions
+TRAFFIC_CROW_RCS_CM2          <- 100.0
+TRAFFIC_LAYER_THICKNESS_KM    <- 0.150  # 150 meters
+TRAFFIC_DIELECTRIC_K2         <- 0.93
+TRAFFIC_LAMBDA_C_BAND_CM      <- 5.35   # TDWR C-band (TDCA, TIAD)
+TRAFFIC_LAMBDA_S_BAND_CM      <- 10.70  # WSR-88D S-band (KLWX)
+
+# Finish Line & Spatial Geometry
+TRAFFIC_FINISH_LINE_DIST_KM   <- 2.0
+TRAFFIC_CORRIDOR_WIDTH_KM     <- 1.5
+TRAFFIC_MAX_FORECAST_RANGE_KM <- 35.0
+TRAFFIC_SCAN_INTERVAL_MINS    <- 6.0
+
+# Flight Speed & Biological Envelope
+TRAFFIC_SPEED_DEFAULT_KMPH    <- 38.0
+TRAFFIC_SPEED_MIN_KMPH        <- 20.0
+TRAFFIC_SPEED_MAX_KMPH        <- 65.0
+TRAFFIC_MIN_DBZH              <- 5.0
