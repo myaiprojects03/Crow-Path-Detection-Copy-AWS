@@ -35,10 +35,16 @@ build_overlay_segments <- function(streams_df, inner_km = PLOT_MIN_DIST_KM, oute
     near_xy <- web_mercator_xy(near_pt[1], near_pt[2])
     far_xy  <- web_mercator_xy(far_pt[1],  far_pt[2])
     
-    # Clamp label to stay within map panel limits
-    clamped_lon <- pmax(MAP_XLIM[1] + 0.015, pmin(lab_pt[1], MAP_XLIM[2] - 0.015))
-    clamped_lat <- pmax(MAP_YLIM[1] + 0.006, pmin(lab_pt[2], MAP_YLIM[2] - 0.006))
-    lab_xy  <- web_mercator_xy(clamped_lon, clamped_lat)
+    # Clamp label to stay within map panel limits with sufficient padding for entire box
+    lims       <- map_mercator_limits()
+    span_x     <- diff(lims$xlim)
+    span_y     <- diff(lims$ylim)
+    pad_x      <- span_x * 0.065
+    pad_y      <- span_y * 0.045
+    raw_lab_xy <- web_mercator_xy(lab_pt[1], lab_pt[2])
+    clamped_x  <- pmax(lims$xlim[1] + pad_x, pmin(raw_lab_xy$x, lims$xlim[2] - pad_x))
+    clamped_y  <- pmax(lims$ylim[1] + pad_y, pmin(raw_lab_xy$y, lims$ylim[2] - pad_y))
+    lab_xy     <- data.frame(x = clamped_x, y = clamped_y)
     
     data.frame(
       bearing_deg   = streams_df$bearing_deg[i],
@@ -373,7 +379,7 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
     }
   }
 
-  # --- 3. Stream overlays ---
+  # --- 3. Stream overlays (segments) ---
   overlay_df <- build_overlay_segments(streams_df)
   if (nrow(overlay_df) > 0) {
     p <- p +
@@ -392,19 +398,6 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
         colour      = "#ffd700",
         linewidth   = 1.8,
         alpha       = 0.6
-      ) +
-      ggplot2::geom_label(
-        data        = overlay_df,
-        ggplot2::aes(
-          x     = label_x,
-          y     = label_y,
-          label = paste0(round(bearing_deg), "\u00b0 ", compass, "\n", round(max_extent_km, 1), " km")
-        ),
-        inherit.aes = FALSE,
-        size        = 3.8,
-        fill        = grDevices::adjustcolor("#555555ff", alpha.f = 0.40),
-        colour      = "white",
-        linewidth   = 0.25
       )
   }
 
@@ -430,6 +423,24 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
   names(p$layers) <- paste0("layer_", seq_along(p$layers))
 
   p <- add_km_secondary_axes(p)
+
+  # --- 5. Stream labels on top (ensures the entire box is always shown without border clipping) ---
+  if (nrow(overlay_df) > 0) {
+    p <- p +
+      ggplot2::geom_label(
+        data        = overlay_df,
+        ggplot2::aes(
+          x     = label_x,
+          y     = label_y,
+          label = paste0(round(bearing_deg), "\u00b0 ", compass, "\n", round(max_extent_km, 1), " km")
+        ),
+        inherit.aes = FALSE,
+        size        = 3.8,
+        fill        = grDevices::adjustcolor("#555555ff", alpha.f = 0.40),
+        colour      = "white",
+        linewidth   = 0.25
+      )
+  }
 
   ggplot2::ggsave(
     filename = out_file, plot = p,
