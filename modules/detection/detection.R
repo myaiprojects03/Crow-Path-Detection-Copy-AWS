@@ -269,7 +269,9 @@ merge_display_streams <- function(streams_df,
     
     use_dist_compass <- exists("DISTANCE_WEIGHT_COMPASS") && isTRUE(DISTANCE_WEIGHT_COMPASS)
     display_bearing  <- if (use_dist_compass && nrow(chunk) > 1) {
-      weights <- (chunk$max_extent_km^3) * chunk$corridor_valid_pixels
+      max_d <- if (exists("DETECTION_MAX_DIST_KM")) DETECTION_MAX_DIST_KM else 30.0
+      dist_weight <- 1 + (pmin(chunk$max_extent_km, max_d) / max_d)
+      weights <- dist_weight * chunk$corridor_valid_pixels
       round(circular_weighted_mean_deg(chunk$bearing_deg, weights)) %% 360
     } else {
       chunk$bearing_deg[best_idx]
@@ -363,8 +365,10 @@ select_streams <- function(scores) {
     }
 
     # Weighted mean bearing of the refined support region (weights further pixels when enabled)
+    max_d <- if (exists("DETECTION_MAX_DIST_KM")) DETECTION_MAX_DIST_KM else 30.0
+    dist_weight <- 1 + (pmin(refined_zone$max_extent_km, max_d) / max_d)
     bearing_weights <- if (use_dist_compass) {
-      (refined_zone$max_extent_km^3) * refined_zone$corridor_valid_pixels
+      dist_weight * refined_zone$corridor_valid_pixels
     } else {
       pmax(refined_zone$quality_score, 1) * (refined_zone$max_extent_km^2)
     }
