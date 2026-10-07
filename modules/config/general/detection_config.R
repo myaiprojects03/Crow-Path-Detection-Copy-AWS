@@ -70,7 +70,7 @@ MAX_CONTRAST_FOR_SCORING     <- 5
 CONTRAST_THRESHOLD           <- 1.25
 CORRIDOR_DENSITY_THRESHOLD   <- 0.05
 RUN_FILL_RATIO_MIN           <- 0.30
-MAX_ANNULUS_WEATHER_COVERAGE <- 0.20
+MAX_ANNULUS_WEATHER_COVERAGE <- 0.30
 WEATHER_COVERAGE_DBZH_MIN    <- 10.0
 
 apply_sensitivity_bundle <- function(bundle_name = DETECTION_SENSITIVITY) {
@@ -84,20 +84,17 @@ apply_sensitivity_bundle <- function(bundle_name = DETECTION_SENSITIVITY) {
     assign("CONTRAST_THRESHOLD",           0.45, envir = .GlobalEnv)
     assign("CORRIDOR_DENSITY_THRESHOLD",   0.02, envir = .GlobalEnv)
     assign("RUN_FILL_RATIO_MIN",           0.15, envir = .GlobalEnv)
-    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.50, envir = .GlobalEnv)
   } else if (bundle_name == "morning") {
     assign("DETECT_DBZH_MIN",              6.0,  envir = .GlobalEnv)
     assign("ETA_THRESHOLD",                10^(6.0 / 10), envir = .GlobalEnv)
     assign("MIN_CORRIDOR_PIXELS",          3L,   envir = .GlobalEnv)
     assign("RUN_START_BIN_MAX",            30L,  envir = .GlobalEnv)
     assign("RUN_FILL_RATIO_MIN",           0.20, envir = .GlobalEnv)
-    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.50, envir = .GlobalEnv)
   } else if (bundle_name == "tdwr") {
     assign("DETECT_DBZH_MIN",              5.0,  envir = .GlobalEnv)
     assign("ETA_THRESHOLD",                10^(5.0 / 10), envir = .GlobalEnv)
     assign("CONTRAST_THRESHOLD",           0.85, envir = .GlobalEnv)
     assign("CORRIDOR_DENSITY_THRESHOLD",   0.08, envir = .GlobalEnv)
-    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.30, envir = .GlobalEnv)
   } else {
     assign("DETECT_DBZH_MIN",              9.0,  envir = .GlobalEnv)
     assign("ETA_THRESHOLD",                10^(9.0 / 10), envir = .GlobalEnv)
@@ -108,7 +105,6 @@ apply_sensitivity_bundle <- function(bundle_name = DETECTION_SENSITIVITY) {
     assign("CONTRAST_THRESHOLD",           1.25, envir = .GlobalEnv)
     assign("CORRIDOR_DENSITY_THRESHOLD",   0.05, envir = .GlobalEnv)
     assign("RUN_FILL_RATIO_MIN",           0.30, envir = .GlobalEnv)
-    assign("MAX_ANNULUS_WEATHER_COVERAGE", 0.20, envir = .GlobalEnv)
   }
 }
 
