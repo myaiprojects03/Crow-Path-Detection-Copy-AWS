@@ -69,7 +69,7 @@ MAX_CONTRAST_FOR_SCORING     <- 5
 # Ratio and coverage thresholds (Strict thresholds for noise/rain rejection)
 CONTRAST_THRESHOLD           <- 1.25
 CORRIDOR_DENSITY_THRESHOLD   <- 0.05
-RUN_FILL_RATIO_MIN           <- 0.30
+RUN_FILL_RATIO_MIN           <- 0.60
 MAX_ANNULUS_WEATHER_COVERAGE <- 0.30
 WEATHER_COVERAGE_DBZH_MIN    <- 10.0
 
@@ -114,12 +114,12 @@ apply_sensitivity_bundle(DETECTION_SENSITIVITY)
 # Merge parameters
 MERGE_GAP_DEG         <- 6
 MAX_STREAMS_PER_SCAN  <- 5
-DISPLAY_MERGE_GAP_DEG <- 12
+DISPLAY_MERGE_GAP_DEG <- 20
 EXTENT_NEIGHBOR_DEG   <- 5
 
 # Distance / reach weighting controls (weights further pixels for compass & scoring)
-DISTANCE_WEIGHT_COMPASS <- TRUE
-DISTANCE_WEIGHT_SCORING <- TRUE
+DISTANCE_WEIGHT_COMPASS <- FALSE
+DISTANCE_WEIGHT_SCORING <- FALSE
 MATCHED_FLANK_BINS      <- TRUE
 
 # Detection masking

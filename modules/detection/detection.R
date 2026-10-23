@@ -264,18 +264,10 @@ merge_display_streams <- function(streams_df,
 
   merged <- lapply(groups, function(idx) {
     chunk <- ordered[idx, , drop = FALSE]
-    extent_vals <- if ("own_max_extent_km" %in% names(chunk)) chunk$own_max_extent_km else chunk$max_extent_km
-    best_idx <- order(-extent_vals, -chunk$corridor_valid_pixels, -chunk$quality_score)[1]
     
-    use_dist_compass <- exists("DISTANCE_WEIGHT_COMPASS") && isTRUE(DISTANCE_WEIGHT_COMPASS)
-    display_bearing  <- if (use_dist_compass && nrow(chunk) > 1) {
-      max_d <- if (exists("DETECTION_MAX_DIST_KM")) DETECTION_MAX_DIST_KM else 30.0
-      dist_weight <- 1 + (pmin(chunk$max_extent_km, max_d) / max_d)
-      weights <- dist_weight * chunk$corridor_valid_pixels
-      round(circular_weighted_mean_deg(chunk$bearing_deg, weights)) %% 360
-    } else {
-      chunk$bearing_deg[best_idx]
-    }
+    # Select the BEST candidate in the cluster by highest quality score & valid pixels
+    best_idx <- order(-chunk$quality_score, -chunk$corridor_valid_pixels)[1]
+    display_bearing <- chunk$bearing_deg[best_idx]
 
     support_parts <- unlist(strsplit(chunk$supporting_bearings, ";", fixed = TRUE))
     support_parts <- sort(unique(support_parts[nzchar(support_parts)]))
@@ -289,8 +281,8 @@ merge_display_streams <- function(streams_df,
       contrast_ratio         = chunk$contrast_ratio[best_idx],
       local_prominence_ratio = chunk$local_prominence_ratio[best_idx],
       corridor_valid_pixels  = chunk$corridor_valid_pixels[best_idx],
-      contiguous_extent_km   = max(chunk$contiguous_extent_km),
-      max_extent_km          = max(chunk$max_extent_km),
+      contiguous_extent_km   = chunk$contiguous_extent_km[best_idx],
+      max_extent_km          = chunk$max_extent_km[best_idx],
       supporting_bearings    = paste(support_parts, collapse = ";"),
       stringsAsFactors       = FALSE
     )

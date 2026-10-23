@@ -114,12 +114,17 @@ load_roost_preset <- function(preset_name, sensitivity = NULL) {
     "EXTENT_NEIGHBOR_DEG", "MAX_STREAMS_PER_SCAN", "LOCAL_PROMINENCE_THRESHOLD",
     "MERGE_GAP_DEG", "DISPLAY_MERGE_GAP_DEG",
     "WEAK_STREAM_ANGLE_WINDOW_DEG", "WEAK_STREAM_FRACTION_THRESHOLD", "MAP_ZOOM", "MAP_USE_TILES",
-    "DISTANCE_WEIGHT_COMPASS", "DISTANCE_WEIGHT_SCORING", "MATCHED_FLANK_BINS", "MAX_ANNULUS_WEATHER_COVERAGE"
+    "DISTANCE_WEIGHT_COMPASS", "DISTANCE_WEIGHT_SCORING", "MATCHED_FLANK_BINS", "MAX_ANNULUS_WEATHER_COVERAGE",
+    "DETECTION_MIN_DIST_KM", "DETECTION_MAX_DIST_KM"
   )
   for (k in roost_override_keys) {
     if (!is.null(preset[[k]])) {
       assign(k, preset[[k]], envir = .GlobalEnv)
     }
+  }
+
+  if (!is.null(preset$DETECT_DBZH_MIN)) {
+    assign("ETA_THRESHOLD", 10^(preset$DETECT_DBZH_MIN / 10), envir = .GlobalEnv)
   }
 }
 
@@ -132,14 +137,14 @@ RUN_MODE <- "batch"
 # Roost preset to load. See available presets in modules/config/roosts/
 # e.g., "North Bethesda KLWX", "North Bethesda TIAD", "Shirlington VA", 
 # or any custom preset in custom_roost_presets.R
-#ACTIVE_ROOST_PRESET <- "North Bethesda KLWX"
+ACTIVE_ROOST_PRESET <- "Shirlington VA"
 
 
 # Option B: Solar event relative offset window on a specific date
 # (Leave SINGLE_RUN_DATE empty if you prefer using Option A)
-SINGLE_RUN_DATE         <- ""       # Format: "YYYY-MM-DD" (e.g. "2024-10-12")
-SINGLE_RUN_EVENT        <- "sunset" # Options: "sunset", "sunrise"
-SINGLE_RUN_START_OFFSET <- -60      # minutes relative to event (negative is before)
-SINGLE_RUN_END_OFFSET   <- 30       # minutes relative to event (positive is after)
+SINGLE_RUN_DATE         <- "2025-11-01" # Format: "YYYY-MM-DD" (e.g. "2024-10-12")
+SINGLE_RUN_EVENT        <- "sunset"     # Options: "sunset", "sunrise"
+SINGLE_RUN_START_OFFSET <- -90          # minutes relative to event (negative is before)
+SINGLE_RUN_END_OFFSET   <- 30           # minutes relative to event (positive is after)
 
 

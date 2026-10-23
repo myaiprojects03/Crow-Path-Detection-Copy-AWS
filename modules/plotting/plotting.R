@@ -24,8 +24,15 @@ build_overlay_segments <- function(streams_df, inner_km = PLOT_MIN_DIST_KM, oute
   if (nrow(streams_df) == 0) return(data.frame())
 
   rows <- lapply(seq_len(nrow(streams_df)), function(i) {
+    min_d <- if (exists("DETECTION_MIN_DIST_KM")) DETECTION_MIN_DIST_KM else 1.0
+    extent_val <- if (!is.null(streams_df$contiguous_extent_km) && !is.na(streams_df$contiguous_extent_km[i])) {
+      min_d + streams_df$contiguous_extent_km[i]
+    } else {
+      streams_df$max_extent_km[i]
+    }
+
     stream_outer_km <- if (is.null(outer_km)) {
-      max(inner_km + 0.5, min(streams_df$max_extent_km[i], PLOT_MAX_DIST_KM))
+      max(inner_km + 0.5, min(extent_val, PLOT_MAX_DIST_KM))
     } else {
       min(outer_km, PLOT_MAX_DIST_KM)
     }
@@ -49,7 +56,7 @@ build_overlay_segments <- function(streams_df, inner_km = PLOT_MIN_DIST_KM, oute
     data.frame(
       bearing_deg   = streams_df$bearing_deg[i],
       compass       = streams_df$compass[i],
-      max_extent_km = streams_df$max_extent_km[i],
+      max_extent_km = extent_val,
       x = near_xy$x, y = near_xy$y,
       xend = far_xy$x, yend = far_xy$y,
       label_x = lab_xy$x, label_y = lab_xy$y
@@ -310,7 +317,8 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
       dbzh = ppi_df$DBZH
     )
     # Clean up weather/clutter using vol2bird CELL parameter if present
-    if ("CELL" %in% names(ppi_df)) {
+    # (Disabled on raw map display to preserve data integrity and prevent erasing dense bird flocks)
+    if (exists("MASK_CELL_ON_MAP") && isTRUE(MASK_CELL_ON_MAP) && "CELL" %in% names(ppi_df)) {
       # CELL values >= 1 denote weather/clutter cells or their 5km fringe
       px_df$dbzh[!is.na(ppi_df$CELL) & ppi_df$CELL >= 1] <- NA
     }
@@ -335,8 +343,16 @@ save_raw_radar_map <- function(raw_ppi, streams_df, scan_time, out_file) {
       px_df$x  <- merc$x
       px_df$y  <- merc$y
 
-      if (exists("MAP_USE_TILES") && isTRUE(MAP_USE_TILES)) {
-        grid_w <- 200 * (1 / cos(ROOST_LAT * pi / 180))
+      # Use exact raster grid tiles (geom_tile) by default for sharp, granular stream rendering
+      use_points <- exists("MAP_USE_POINTS") && isTRUE(MAP_USE_POINTS)
+      
+      if (!use_points) {
+        cell_size_m <- tryCatch({
+          raw_ppi$data@grid@cellsize[1]
+        }, error = function(e) 200)
+        if (is.null(cell_size_m) || is.na(cell_size_m) || cell_size_m <= 0) cell_size_m <- 200
+        grid_w <- cell_size_m * (1 / cos(ROOST_LAT * pi / 180))
+
         p <- p +
           ggplot2::geom_tile(
             data        = px_df,

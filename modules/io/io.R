@@ -301,7 +301,11 @@ process_scan_file <- function(file_path) {
 
   detect_pvol <- if (need_mistnet) run_mistnet(file_path) else raw_pvol
   detect_scan <- bioRad::get_scan(detect_pvol, ELEVATION_DEG)
-  detect_ppi  <- bioRad::project_as_ppi(detect_scan)
+  detect_ppi  <- if (is_tdca) {
+    bioRad::project_as_ppi(detect_scan, grid_size = 200, range_max = 35000)
+  } else {
+    bioRad::project_as_ppi(detect_scan)
+  }
 
   raw_df    <- ppi_to_df(raw_ppi,    params = c("DBZH", "RHOHV", "CELL"))
   detect_df <- ppi_to_df(detect_ppi, params = c("DBZH", "RHOHV", "CELL", "WEATHER", "BIOLOGY"))
